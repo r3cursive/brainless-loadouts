@@ -7,6 +7,45 @@ const {
 } = require('../v1/app.js');
 
 describe('Smart Weighted Budget Allocation', () => {
+    describe('Primary Weapon Validation', () => {
+        test('should never return sidearms as primary weapons', () => {
+            const sidearmNames = ['Classic', 'Shorty', 'Frenzy', 'Ghost', 'Sheriff'];
+            const tiers = ['eco', 'half', 'full'];
+            const budgets = [300, 800, 1500, 3000, 5500, 9000];
+
+            // Test all combinations of budget and tier
+            tiers.forEach(tier => {
+                budgets.forEach(budget => {
+                    for (let i = 0; i < 50; i++) {
+                        const weapon = getWeightedPrimaryWeapon(budget, tier);
+
+                        // Assert that the weapon is NOT a sidearm
+                        expect(sidearmNames).not.toContain(weapon.name);
+                    }
+                });
+            });
+        });
+
+        test('should never generate loadouts with sidearms as primary', () => {
+            const sidearmNames = ['Classic', 'Shorty', 'Frenzy', 'Ghost', 'Sheriff'];
+            const budgets = [300, 800, 1500, 3000, 5500];
+
+            budgets.forEach(budget => {
+                for (let i = 0; i < 20; i++) {
+                    const loadout = generateBudgetLoadout('jett', budget);
+
+                    if (loadout) {
+                        // Assert primary is not a sidearm
+                        expect(sidearmNames).not.toContain(loadout.primary.name);
+
+                        // Assert sidearm IS actually a sidearm
+                        expect(sidearmNames).toContain(loadout.sidearm.name);
+                    }
+                }
+            });
+        });
+    });
+
     describe('Eco Tier (< $1500)', () => {
         test('should have no primary weapon at 300 credits', () => {
             const iterations = 100;
