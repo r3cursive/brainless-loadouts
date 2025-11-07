@@ -1,0 +1,119 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0a0a0a;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.header {
+    border-bottom: 2px solid #00ff00;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 24px;
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+.header p {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.output {
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #000;
+    border: 1px solid #00ff00;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.output::-webkit-scrollbar {
+    width: 10px;
+}
+
+.output::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+
+.output::-webkit-scrollbar-thumb {
+    background: #00ff00;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prompt {
+    color: #00ff00;
+    font-size: 18px;
+}
+
+input {
+    flex: 1;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    outline: none;
+}
+
+input:focus {
+    box-shadow: 0 0 10px #00ff00;
+}
+
+button {
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background-color: #00ff00;
+    color: #000;
+}
+
+.error {
+    color: #ff0000;
+}
+
+.agent-name {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.cost {
+    color: #ffff00;
+}
+
+.help-text {
+    color: #888;
+}

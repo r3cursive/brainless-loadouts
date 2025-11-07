@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALORANT Loadout Randomizer v1.0</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>> VALORANT LOADOUT RANDOMIZER v1.0</h1>
+            <p>Type 'help' for commands</p>
+        </div>
+
+        <div id="output" class="output">Welcome to VALORANT Loadout Randomizer v1.0!
+
+Type a command to get started:
+  - 'loadout' for random everything
+  - 'agent:jett' for specific agent loadout
+  - '3000' for agents affordable at budget
+  - 'help' for more info
+</div>
+
+        <div class="input-container">
+            <span class="prompt">></span>
+            <input type="text" id="commandInput" placeholder="Enter command..." autocomplete="off" autofocus>
+            <button onclick="randomLoadout()">RANDOM</button>
+            <button onclick="clearOutput()">CLEAR</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
