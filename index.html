@@ -235,9 +235,8 @@ Type a command to get started:
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        function getAllWeapons() {
+        function getAllPrimaryWeapons() {
             return [
-                ...WEAPONS.sidearms.slice(1), // Exclude Classic from primaries
                 ...WEAPONS.smgs,
                 ...WEAPONS.shotguns,
                 ...WEAPONS.rifles,
@@ -246,9 +245,9 @@ Type a command to get started:
             ];
         }
 
-        function getRandomWeapon() {
-            const allWeapons = getAllWeapons();
-            return getRandomElement(allWeapons);
+        function getRandomPrimaryWeapon() {
+            const allPrimaries = getAllPrimaryWeapons();
+            return getRandomElement(allPrimaries);
         }
 
         function getRandomSidearm() {
@@ -278,22 +277,17 @@ Type a command to get started:
             const abilities = [];
             let totalCost = 0;
 
-            // Randomly decide whether to buy each ability
-            ['c', 'q'].forEach(ability => {
+            // Randomly decide whether to buy each ability (including signature)
+            ['c', 'q', 'e'].forEach(ability => {
                 if (Math.random() > 0.3) { // 70% chance to buy each ability
                     const cost = getAbilityCost(agentName, ability);
-                    if (cost > 0) {
+                    // Only add if not already in list
+                    if (!abilities.includes(ability.toUpperCase())) {
                         abilities.push(ability.toUpperCase());
-                        totalCost += cost;
+                        totalCost += cost; // Signature abilities have 0 cost
                     }
                 }
             });
-
-            // Always include signature ability (free)
-            const sig = agent.signature.toUpperCase();
-            if (!abilities.includes(sig)) {
-                abilities.push(sig);
-            }
 
             return { abilities: abilities.sort(), cost: totalCost };
         }
@@ -323,7 +317,7 @@ Type a command to get started:
                 ({ primary, sidearm, shield, abilities, totalCost } = result);
             } else {
                 // Free randomization
-                primary = getRandomWeapon();
+                primary = getRandomPrimaryWeapon();
                 sidearm = getRandomSidearm();
                 shield = getRandomShield();
                 const abilityData = getRandomAbilities(agent);
@@ -348,7 +342,7 @@ Type a command to get started:
 
             // Try multiple times to find a valid loadout
             for (let attempt = 0; attempt < 50; attempt++) {
-                const primary = getRandomWeapon();
+                const primary = getRandomPrimaryWeapon();
                 const sidearm = getRandomSidearm();
                 const shield = getRandomShield();
                 const abilityData = getRandomAbilities(agent);
