@@ -129,9 +129,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>╔═══════════════════════════════════════╗</h1>
-            <h1>║   VALORANT LOADOUT RANDOMIZER v1.0   ║</h1>
-            <h1>╚═══════════════════════════════════════╝</h1>
+            <h1>╔═════════════════════════════════════════╗</h1>
+            <h1>║  VALORANT LOADOUT RANDOMIZER v1.0   ║</h1>
+            <h1>╚═════════════════════════════════════════╝</h1>
             <p>Type 'help' for commands</p>
         </div>
 
@@ -468,17 +468,17 @@ Type a command to get started:
                     return `No agents can afford a full loadout with $${budget.toLocaleString()} budget.`;
                 }
 
-                let output = `\n═══════════════════════════════════════════════════════════════════════════════════════════════════════\n`;
+                let output = `\n${'═'.repeat(100)}\n`;
                 output += `  AGENTS AFFORDABLE AT $${budget.toLocaleString()} (${affordable.length} agents)\n`;
-                output += `═══════════════════════════════════════════════════════════════════════════════════════════════════════\n`;
+                output += `${'═'.repeat(100)}\n`;
                 output += `  AGENT        | PRIMARY    | SIDEARM  | SHIELD        | ABILITIES       | TOTAL\n`;
-                output += `───────────────────────────────────────────────────────────────────────────────────────────────────────\n`;
+                output += `${'─'.repeat(100)}\n`;
 
                 affordable.forEach(loadout => {
                     output += `  ${formatCompactLoadout(loadout)}\n`;
                 });
 
-                output += `═══════════════════════════════════════════════════════════════════════════════════════════════════════`;
+                output += `${'═'.repeat(100)}`;
 
                 return output;
             }
