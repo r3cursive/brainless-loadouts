@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VALORANT Loadout Randomizer</title>
+    <script>
+        // Auto-redirect to v1 if loaded from web (not local file)
+        if (window.location.protocol !== 'file:' && !window.location.pathname.includes('/v1/')) {
+            window.location.replace(window.location.origin + window.location.pathname.replace(/\/$/, '') + '/v1/');
+        }
+    </script>
     <style>
         * {
             margin: 0;
