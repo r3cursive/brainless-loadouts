@@ -112,10 +112,10 @@ describe('Randomizer Core Functions', () => {
             });
         });
 
-        test('should sort by cost descending', () => {
+        test('should sort alphabetically by agent name', () => {
             const affordable = getAllAffordableAgents(5000);
             for (let i = 0; i < affordable.length - 1; i++) {
-                expect(affordable[i].totalCost).toBeGreaterThanOrEqual(affordable[i + 1].totalCost);
+                expect(affordable[i].agent.localeCompare(affordable[i + 1].agent)).toBeLessThanOrEqual(0);
             }
         });
     });

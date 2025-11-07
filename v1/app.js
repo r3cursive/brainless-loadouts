@@ -418,7 +418,7 @@ function getAllAffordableAgents(budget) {
         }
     }
 
-    return affordable.sort((a, b) => b.totalCost - a.totalCost);
+    return affordable.sort((a, b) => a.agent.localeCompare(b.agent));
 }
 
 // ==================== COMMAND HANDLING ====================
