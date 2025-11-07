@@ -101,7 +101,6 @@ function getWeightedRandomElement(items, weights) {
 function getWeightedPrimaryWeapon(budget, tier) {
     const allPrimaries = [
         { name: "None", cost: 0 },
-        ...WEAPONS.sidearms.filter(w => w.cost > 0), // Exclude Classic, include other sidearms as primaries
         ...WEAPONS.smgs,
         ...WEAPONS.shotguns,
         ...WEAPONS.rifles,
@@ -116,11 +115,10 @@ function getWeightedPrimaryWeapon(budget, tier) {
     // Create weights based on budget tier
     const weights = affordable.map(weapon => {
         if (tier === 'eco') {
-            // Eco: Prefer cheap options
-            if (weapon.cost === 0) return 30; // None
-            if (weapon.cost <= 500) return 40; // Cheap pistols
-            if (weapon.cost <= 1000) return 20; // SMGs, shotguns, marshal
-            return 10; // Everything else
+            // Eco: Prefer no primary or cheap SMGs/shotguns
+            if (weapon.cost === 0) return 70; // None - save money for sidearm
+            if (weapon.cost <= 1100) return 25; // Bucky, Marshal, Stinger
+            return 5; // Everything else
         } else if (tier === 'half') {
             // Half buy: Balanced
             if (weapon.cost === 0) return 10; // None

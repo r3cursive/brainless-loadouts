@@ -8,7 +8,7 @@ const {
 
 describe('Smart Weighted Budget Allocation', () => {
     describe('Eco Tier (< $1500)', () => {
-        test('should prioritize cheap weapons at 300 credits', () => {
+        test('should have no primary weapon at 300 credits', () => {
             const iterations = 100;
             const weapons = [];
 
@@ -18,14 +18,29 @@ describe('Smart Weighted Budget Allocation', () => {
             }
 
             // Count occurrences
-            const shortyCount = weapons.filter(w => w === 'Shorty').length;
             const noneCount = weapons.filter(w => w === 'None').length;
-            const classicCount = weapons.filter(w => w === 'Classic').length;
 
-            // At 300 credits, Shorty should appear frequently (weighted 40%)
-            expect(shortyCount).toBeGreaterThan(20); // Should be roughly 40%
-            // None and Classic should also appear (weighted 30%)
-            expect(noneCount + classicCount).toBeGreaterThan(20);
+            // At 300 credits, no primary weapons are affordable (cheapest is Bucky at 850)
+            // So 100% should be "None"
+            expect(noneCount).toBe(100);
+        });
+
+        test('should prefer Shorty or Classic sidearm at 300 credits', () => {
+            const iterations = 100;
+            const sidearms = [];
+
+            for (let i = 0; i < iterations; i++) {
+                const sidearm = getWeightedSidearm(300, 'eco');
+                sidearms.push(sidearm.name);
+            }
+
+            const classicCount = sidearms.filter(s => s === 'Classic').length;
+            const shortyCount = sidearms.filter(s => s === 'Shorty').length;
+
+            // At 300 credits, only Classic and Shorty are affordable
+            // Classic (50% weight) and Shorty (30% weight) should dominate
+            expect(classicCount + shortyCount).toBe(100);
+            expect(classicCount).toBeGreaterThan(40); // Classic weighted higher
         });
 
         test('should prefer Classic sidearm in eco', () => {
