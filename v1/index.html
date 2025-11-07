@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';">
     <title>VALORANT Loadout Randomizer v1.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,9 +15,9 @@ Commands: loadout | agent:&lt;name&gt; | &lt;number&gt; | help | agents | clear
 
     <div class="input-bar">
         <span class="prompt">></span>
-        <input type="text" id="commandInput" placeholder="enter command" autocomplete="off" autofocus>
-        <button onclick="randomLoadout()">random</button>
-        <button onclick="clearOutput()">clear</button>
+        <input type="text" id="commandInput" placeholder="enter command" autocomplete="off" autofocus maxlength="100">
+        <button id="randomBtn">random</button>
+        <button id="clearBtn">clear</button>
     </div>
 
     <script src="app.js"></script>

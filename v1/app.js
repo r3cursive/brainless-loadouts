@@ -581,7 +581,8 @@ if (typeof document !== 'undefined') {
         }
 
         function submitCommand() {
-            const command = commandInput.value;
+            // Sanitize input: limit length and ensure it's a string
+            const command = String(commandInput.value).substring(0, 100);
             addToOutput('> ' + command);
             const result = processCommand(command);
             addToOutput(result);
@@ -596,9 +597,17 @@ if (typeof document !== 'undefined') {
             }
         });
 
-        // Make functions available globally for onclick handlers
-        window.randomLoadout = randomLoadout;
-        window.clearOutput = clearOutput;
+        // Attach event listeners to buttons
+        const randomBtn = document.getElementById('randomBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        if (randomBtn) {
+            randomBtn.addEventListener('click', randomLoadout);
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', clearOutput);
+        }
 
         // Focus input on page load
         commandInput.focus();
