@@ -237,6 +237,7 @@ Type a command to get started:
 
         function getAllPrimaryWeapons() {
             return [
+                { name: "None", cost: 0 }, // Allow no primary weapon
                 ...WEAPONS.smgs,
                 ...WEAPONS.shotguns,
                 ...WEAPONS.rifles,
@@ -245,9 +246,20 @@ Type a command to get started:
             ];
         }
 
-        function getRandomPrimaryWeapon() {
-            const allPrimaries = getAllPrimaryWeapons();
-            return getRandomElement(allPrimaries);
+        function getRandomPrimaryWeapon(includingNone = true) {
+            if (includingNone) {
+                const allPrimaries = getAllPrimaryWeapons();
+                return getRandomElement(allPrimaries);
+            } else {
+                const primariesOnly = [
+                    ...WEAPONS.smgs,
+                    ...WEAPONS.shotguns,
+                    ...WEAPONS.rifles,
+                    ...WEAPONS.snipers,
+                    ...WEAPONS.lmgs
+                ];
+                return getRandomElement(primariesOnly);
+            }
         }
 
         function getRandomSidearm() {
@@ -316,8 +328,8 @@ Type a command to get started:
                 if (!result) return null;
                 ({ primary, sidearm, shield, abilities, totalCost } = result);
             } else {
-                // Free randomization
-                primary = getRandomPrimaryWeapon();
+                // Free randomization - always include a primary weapon
+                primary = getRandomPrimaryWeapon(false); // excludeNone = false means include actual weapons
                 sidearm = getRandomSidearm();
                 shield = getRandomShield();
                 const abilityData = getRandomAbilities(agent);
