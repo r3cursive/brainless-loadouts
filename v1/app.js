@@ -565,7 +565,10 @@ if (typeof document !== 'undefined') {
                 outputDiv.textContent = '';
             } else {
                 outputDiv.textContent += '\n\n' + text;
-                outputDiv.scrollTop = outputDiv.scrollHeight;
+                // Scroll window to bottom after DOM updates
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
             }
         }
 
