@@ -385,16 +385,16 @@ function formatLoadout(loadout) {
         : 'None';
 
     return `
-╔════════════════════════════════════════════════════════════════╗
-  AGENT: ${loadout.agent.toUpperCase()} (${loadout.role})
-╠════════════════════════════════════════════════════════════════╣
-  PRIMARY:   ${loadout.primary.name.padEnd(15)} $${loadout.primary.cost.toLocaleString()}
-  SIDEARM:   ${loadout.sidearm.name.padEnd(15)} $${loadout.sidearm.cost.toLocaleString()}
-  SHIELD:    ${loadout.shield.name.padEnd(15)} $${loadout.shield.cost.toLocaleString()}
-  ABILITIES: ${abilities}
-╠════════════════════════════════════════════════════════════════╣
-  TOTAL COST: $${loadout.totalCost.toLocaleString()}
-╚════════════════════════════════════════════════════════════════╝`;
+${'═'.repeat(60)}
+AGENT: ${loadout.agent.toUpperCase()} (${loadout.role})
+${'─'.repeat(60)}
+PRIMARY:   ${loadout.primary.name.padEnd(15)} $${loadout.primary.cost.toLocaleString()}
+SIDEARM:   ${loadout.sidearm.name.padEnd(15)} $${loadout.sidearm.cost.toLocaleString()}
+SHIELD:    ${loadout.shield.name.padEnd(15)} $${loadout.shield.cost.toLocaleString()}
+ABILITIES: ${abilities}
+${'─'.repeat(60)}
+TOTAL COST: $${loadout.totalCost.toLocaleString()}
+${'═'.repeat(60)}`;
 }
 
 function formatCompactLoadout(loadout) {
@@ -494,43 +494,41 @@ function processCommand(command) {
 
 function getHelpText() {
     return `
-╔═══════════════════════════════════════════════════════════════╗
-║                     AVAILABLE COMMANDS                        ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  loadout                                                      ║
-║    Generate a completely random loadout                      ║
-║                                                               ║
-║  agent:<name>                                                 ║
-║    Generate random loadout for specific agent                ║
-║    Example: agent:jett, agent:sage, agent:omen               ║
-║                                                               ║
-║  <number>                                                     ║
-║    Show all agents that can afford a loadout at that budget  ║
-║    Example: 800, 3000, 5500                                  ║
-║                                                               ║
-║  agents                                                       ║
-║    List all available agents                                 ║
-║                                                               ║
-║  help                                                         ║
-║    Show this help message                                    ║
-║                                                               ║
-║  clear                                                        ║
-║    Clear the output screen                                   ║
-║                                                               ║
-╠═══════════════════════════════════════════════════════════════╣
-║  COMMON BUDGETS:                                             ║
-║    800  - Pistol round                                       ║
-║    2500 - Eco/save round                                     ║
-║    3500 - Half buy                                           ║
-║    5500 - Full buy                                           ║
-╚═══════════════════════════════════════════════════════════════╝`;
+AVAILABLE COMMANDS
+${'═'.repeat(60)}
+
+loadout
+  Generate a completely random loadout
+
+agent:<name>
+  Generate random loadout for specific agent
+  Example: agent:jett, agent:sage, agent:omen
+
+<number>
+  Show all agents that can afford a loadout at that budget
+  Example: 800, 3000, 5500
+
+agents
+  List all available agents
+
+help
+  Show this help message
+
+clear
+  Clear the output screen
+
+${'─'.repeat(60)}
+COMMON BUDGETS:
+  800  - Pistol round
+  2500 - Eco/save round
+  3500 - Half buy
+  5500 - Full buy
+${'═'.repeat(60)}`;
 }
 
 function listAllAgents() {
-    let output = '\n╔═══════════════════════════════════════════════════════════════╗\n';
-    output += '║                      ALL AGENTS (29)                         ║\n';
-    output += '╠═══════════════════════════════════════════════════════════════╣\n\n';
+    let output = '\nALL AGENTS (29)\n';
+    output += `${'═'.repeat(60)}\n\n`;
 
     const roles = {
         "Controller": [],
@@ -545,11 +543,11 @@ function listAllAgents() {
     });
 
     Object.keys(roles).forEach(role => {
-        output += `  ${role.toUpperCase()} (${roles[role].length}):\n`;
-        output += `    ${roles[role].join(', ')}\n\n`;
+        output += `${role.toUpperCase()} (${roles[role].length}):\n`;
+        output += `  ${roles[role].join(', ')}\n\n`;
     });
 
-    output += '╚═══════════════════════════════════════════════════════════════╝';
+    output += `${'═'.repeat(60)}`;
 
     return output;
 }
@@ -577,7 +575,7 @@ if (typeof document !== 'undefined') {
         }
 
         function clearOutput() {
-            outputDiv.textContent = '';
+            outputDiv.textContent = 'VALORANT LOADOUT RANDOMIZER v1.0\nCommands: loadout | agent:<name> | <number> | help | agents | clear\n\n';
             commandInput.value = '';
             commandInput.focus();
         }

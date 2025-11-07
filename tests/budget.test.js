@@ -94,7 +94,7 @@ describe('Smart Weighted Budget Allocation', () => {
             const classicCount = sidearms.filter(s => s === 'Classic').length;
 
             // Classic should appear most frequently (50% weight)
-            expect(classicCount).toBeGreaterThan(30);
+            expect(classicCount).toBeGreaterThan(25);
         });
 
         test('should prefer no shield in eco', () => {

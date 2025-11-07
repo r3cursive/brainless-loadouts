@@ -7,27 +7,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>> VALORANT LOADOUT RANDOMIZER v1.0</h1>
-            <p>Type 'help' for commands</p>
-        </div>
+    <div id="output" class="command-history">VALORANT LOADOUT RANDOMIZER v1.0
+Commands: loadout | agent:&lt;name&gt; | &lt;number&gt; | help | agents | clear
 
-        <div id="output" class="output">Welcome to VALORANT Loadout Randomizer v1.0!
-
-Type a command to get started:
-  - 'loadout' for random everything
-  - 'agent:jett' for specific agent loadout
-  - '3000' for agents affordable at budget
-  - 'help' for more info
 </div>
 
-        <div class="input-container">
-            <span class="prompt">></span>
-            <input type="text" id="commandInput" placeholder="Enter command..." autocomplete="off" autofocus>
-            <button onclick="randomLoadout()">RANDOM</button>
-            <button onclick="clearOutput()">CLEAR</button>
-        </div>
+    <div class="input-bar">
+        <span class="prompt">></span>
+        <input type="text" id="commandInput" placeholder="enter command" autocomplete="off" autofocus>
+        <button onclick="randomLoadout()">random</button>
+        <button onclick="clearOutput()">clear</button>
     </div>
 
     <script src="app.js"></script>
