@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALORANT Loadout Randomizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .output {
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #000;
+            border: 1px solid #00ff00;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .output::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        .output::-webkit-scrollbar-thumb {
+            background: #00ff00;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prompt {
+            color: #00ff00;
+            font-size: 18px;
+        }
+
+        input {
+            flex: 1;
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button {
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #00ff00;
+            color: #000;
+        }
+
+        .error {
+            color: #ff0000;
+        }
+
+        .agent-name {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .cost {
+            color: #ffff00;
+        }
+
+        .help-text {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>╔═══════════════════════════════════════╗</h1>
+            <h1>║   VALORANT LOADOUT RANDOMIZER v1.0   ║</h1>
+            <h1>╚═══════════════════════════════════════╝</h1>
+            <p>Type 'help' for commands</p>
+        </div>
+
+        <div id="output" class="output">Welcome to VALORANT Loadout Randomizer!
+
+Type a command to get started:
+  - 'loadout' for random everything
+  - 'agent:jett' for specific agent loadout
+  - '3000' for agents affordable at budget
+  - 'help' for more info
+</div>
+
+        <div class="input-container">
+            <span class="prompt">></span>
+            <input type="text" id="commandInput" placeholder="Enter command..." autocomplete="off" autofocus>
+            <button onclick="randomLoadout()">RANDOM</button>
+            <button onclick="clearOutput()">CLEAR</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA ====================
+
+        const AGENTS = {
+            // CONTROLLERS
+            "astra": { role: "Controller", c: 150, q: 0, e: 0, signature: "e", charges: { c: 4 } },
+            "brimstone": { role: "Controller", c: 100, q: 250, e: 0, signature: "e" },
+            "omen": { role: "Controller", c: 150, q: 300, e: 0, signature: "e" },
+            "viper": { role: "Controller", c: 200, q: 200, e: 0, signature: "e" },
+            "harbor": { role: "Controller", c: 150, q: 350, e: 0, signature: "e" },
+            "clove": { role: "Controller", c: 100, q: 250, e: 150, signature: "e" },
+
+            // DUELISTS
+            "jett": { role: "Duelist", c: 200, q: 150, e: 0, signature: "e" },
+            "phoenix": { role: "Duelist", c: 200, q: 250, e: 0, signature: "e" },
+            "reyna": { role: "Duelist", c: 250, q: 0, e: 0, signature: "q" },
+            "raze": { role: "Duelist", c: 400, q: 200, e: 0, signature: "e" },
+            "yoru": { role: "Duelist", c: 100, q: 250, e: 0, signature: "e" },
+            "neon": { role: "Duelist", c: 300, q: 200, e: 0, signature: "e" },
+            "iso": { role: "Duelist", c: 250, q: 300, e: 150, signature: "e" },
+
+            // INITIATORS
+            "sova": { role: "Initiator", c: 400, q: 150, e: 0, signature: "e" },
+            "breach": { role: "Initiator", c: 250, q: 200, e: 0, signature: "e" },
+            "skye": { role: "Initiator", c: 200, q: 250, e: 250, signature: "e" },
+            "kayo": { role: "Initiator", c: 200, q: 250, e: 0, signature: "e" },
+            "fade": { role: "Initiator", c: 250, q: 200, e: 0, signature: "e" },
+            "gekko": { role: "Initiator", c: 250, q: 300, e: 0, signature: "e" },
+            "tejo": { role: "Initiator", c: 400, q: 200, e: 150, signature: "e" },
+
+            // SENTINELS
+            "sage": { role: "Sentinel", c: 400, q: 200, e: 0, signature: "e" },
+            "cypher": { role: "Sentinel", c: 200, q: 100, e: 0, signature: "e" },
+            "killjoy": { role: "Sentinel", c: 200, q: 200, e: 0, signature: "e" },
+            "chamber": { role: "Sentinel", c: 150, q: 100, e: 0, signature: "q" },
+            "deadlock": { role: "Sentinel", c: 200, q: 200, e: 300, signature: "e" },
+            "vyse": { role: "Sentinel", c: 150, q: 200, e: 0, signature: "e" },
+            "veto": { role: "Sentinel", c: 200, q: 200, e: 0, signature: "e" }
+        };
+
+        const WEAPONS = {
+            sidearms: [
+                { name: "Classic", cost: 0 },
+                { name: "Shorty", cost: 300 },
+                { name: "Frenzy", cost: 450 },
+                { name: "Ghost", cost: 500 },
+                { name: "Sheriff", cost: 800 }
+            ],
+            smgs: [
+                { name: "Stinger", cost: 1100 },
+                { name: "Spectre", cost: 1600 }
+            ],
+            shotguns: [
+                { name: "Bucky", cost: 850 },
+                { name: "Judge", cost: 1850 }
+            ],
+            rifles: [
+                { name: "Bulldog", cost: 2050 },
+                { name: "Guardian", cost: 2250 },
+                { name: "Phantom", cost: 2900 },
+                { name: "Vandal", cost: 2900 }
+            ],
+            snipers: [
+                { name: "Marshal", cost: 950 },
+                { name: "Outlaw", cost: 2400 },
+                { name: "Operator", cost: 4700 }
+            ],
+            lmgs: [
+                { name: "Ares", cost: 1600 },
+                { name: "Odin", cost: 3200 }
+            ]
+        };
+
+        const SHIELDS = [
+            { name: "No Shield", cost: 0 },
+            { name: "Light Shield", cost: 400 },
+            { name: "Heavy Shield", cost: 1000 }
+        ];
+
+        // ==================== UTILITY FUNCTIONS ====================
+
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function getAllWeapons() {
+            return [
+                ...WEAPONS.sidearms.slice(1), // Exclude Classic from primaries
+                ...WEAPONS.smgs,
+                ...WEAPONS.shotguns,
+                ...WEAPONS.rifles,
+                ...WEAPONS.snipers,
+                ...WEAPONS.lmgs
+            ];
+        }
+
+        function getRandomWeapon() {
+            const allWeapons = getAllWeapons();
+            return getRandomElement(allWeapons);
+        }
+
+        function getRandomSidearm() {
+            return getRandomElement(WEAPONS.sidearms);
+        }
+
+        function getRandomShield() {
+            return getRandomElement(SHIELDS);
+        }
+
+        function getAbilityCost(agent, ability) {
+            const agentData = AGENTS[agent.toLowerCase()];
+            if (!agentData) return 0;
+
+            // Signature abilities are free
+            if (agentData.signature === ability.toLowerCase()) {
+                return 0;
+            }
+
+            return agentData[ability.toLowerCase()] || 0;
+        }
+
+        function getRandomAbilities(agentName) {
+            const agent = AGENTS[agentName.toLowerCase()];
+            if (!agent) return { abilities: [], cost: 0 };
+
+            const abilities = [];
+            let totalCost = 0;
+
+            // Randomly decide whether to buy each ability
+            ['c', 'q'].forEach(ability => {
+                if (Math.random() > 0.3) { // 70% chance to buy each ability
+                    const cost = getAbilityCost(agentName, ability);
+                    if (cost > 0) {
+                        abilities.push(ability.toUpperCase());
+                        totalCost += cost;
+                    }
+                }
+            });
+
+            // Always include signature ability (free)
+            const sig = agent.signature.toUpperCase();
+            if (!abilities.includes(sig)) {
+                abilities.push(sig);
+            }
+
+            return { abilities: abilities.sort(), cost: totalCost };
+        }
+
+        // ==================== RANDOMIZER FUNCTIONS ====================
+
+        function generateLoadout(agentName = null, maxBudget = null) {
+            let agent = agentName;
+            if (!agent) {
+                const agentNames = Object.keys(AGENTS);
+                agent = getRandomElement(agentNames);
+            }
+
+            agent = agent.toLowerCase();
+
+            if (!AGENTS[agent]) {
+                return null;
+            }
+
+            let primary, sidearm, shield, abilities;
+            let totalCost;
+
+            if (maxBudget) {
+                // Budget-constrained randomization
+                const result = generateBudgetLoadout(agent, maxBudget);
+                if (!result) return null;
+                ({ primary, sidearm, shield, abilities, totalCost } = result);
+            } else {
+                // Free randomization
+                primary = getRandomWeapon();
+                sidearm = getRandomSidearm();
+                shield = getRandomShield();
+                const abilityData = getRandomAbilities(agent);
+                abilities = abilityData.abilities;
+                totalCost = primary.cost + sidearm.cost + shield.cost + abilityData.cost;
+            }
+
+            return {
+                agent: agent.charAt(0).toUpperCase() + agent.slice(1),
+                role: AGENTS[agent].role,
+                primary,
+                sidearm,
+                shield,
+                abilities,
+                totalCost
+            };
+        }
+
+        function generateBudgetLoadout(agent, maxBudget) {
+            const agentData = AGENTS[agent.toLowerCase()];
+            if (!agentData) return null;
+
+            // Try multiple times to find a valid loadout
+            for (let attempt = 0; attempt < 50; attempt++) {
+                const primary = getRandomWeapon();
+                const sidearm = getRandomSidearm();
+                const shield = getRandomShield();
+                const abilityData = getRandomAbilities(agent);
+
+                const totalCost = primary.cost + sidearm.cost + shield.cost + abilityData.cost;
+
+                if (totalCost <= maxBudget) {
+                    return {
+                        primary,
+                        sidearm,
+                        shield,
+                        abilities: abilityData.abilities,
+                        totalCost
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        function formatLoadout(loadout) {
+            if (!loadout) return "ERROR: Could not generate loadout";
+
+            const abilities = loadout.abilities.length > 0
+                ? loadout.abilities.join(' + ')
+                : 'None';
+
+            return `
+╔════════════════════════════════════════════════════════════════╗
+  AGENT: ${loadout.agent.toUpperCase()} (${loadout.role})
+╠════════════════════════════════════════════════════════════════╣
+  PRIMARY:   ${loadout.primary.name.padEnd(15)} $${loadout.primary.cost.toLocaleString()}
+  SIDEARM:   ${loadout.sidearm.name.padEnd(15)} $${loadout.sidearm.cost.toLocaleString()}
+  SHIELD:    ${loadout.shield.name.padEnd(15)} $${loadout.shield.cost.toLocaleString()}
+  ABILITIES: ${abilities}
+╠════════════════════════════════════════════════════════════════╣
+  TOTAL COST: $${loadout.totalCost.toLocaleString()}
+╚════════════════════════════════════════════════════════════════╝`;
+        }
+
+        function formatCompactLoadout(loadout) {
+            if (!loadout) return null;
+
+            const abilities = loadout.abilities.length > 0
+                ? loadout.abilities.join('+')
+                : 'None';
+
+            return `${loadout.agent.toUpperCase().padEnd(12)} | ${loadout.primary.name.padEnd(10)} | ${loadout.sidearm.name.padEnd(8)} | ${loadout.shield.name.padEnd(13)} | ${abilities.padEnd(15)} | $${loadout.totalCost.toLocaleString()}`;
+        }
+
+        function getAllAffordableAgents(budget) {
+            const agentNames = Object.keys(AGENTS);
+            const affordable = [];
+
+            for (const agent of agentNames) {
+                const loadout = generateLoadout(agent, budget);
+                if (loadout) {
+                    affordable.push(loadout);
+                }
+            }
+
+            return affordable.sort((a, b) => b.totalCost - a.totalCost);
+        }
+
+        // ==================== COMMAND HANDLING ====================
+
+        function processCommand(command) {
+            command = command.trim().toLowerCase();
+
+            if (!command) {
+                return "ERROR: Empty command. Type 'help' for available commands.";
+            }
+
+            if (command === 'help') {
+                return getHelpText();
+            }
+
+            if (command === 'clear') {
+                return '';
+            }
+
+            if (command === 'loadout' || command === 'random') {
+                const loadout = generateLoadout();
+                return formatLoadout(loadout);
+            }
+
+            if (command.startsWith('agent:')) {
+                const agentName = command.substring(6).trim();
+                if (!agentName) {
+                    return "ERROR: Please specify an agent name. Example: agent:jett";
+                }
+
+                if (!AGENTS[agentName.toLowerCase()]) {
+                    return `ERROR: Unknown agent '${agentName}'. Type 'agents' to see all agents.`;
+                }
+
+                const loadout = generateLoadout(agentName);
+                return formatLoadout(loadout);
+            }
+
+            if (command === 'agents') {
+                return listAllAgents();
+            }
+
+            // Check if it's a number (budget)
+            const budget = parseInt(command);
+            if (!isNaN(budget)) {
+                if (budget < 0 || budget > 9000) {
+                    return "ERROR: Budget must be between 0 and 9000 credits.";
+                }
+
+                const affordable = getAllAffordableAgents(budget);
+
+                if (affordable.length === 0) {
+                    return `No agents can afford a full loadout with $${budget.toLocaleString()} budget.`;
+                }
+
+                let output = `\n═══════════════════════════════════════════════════════════════════════════════════════════════════════\n`;
+                output += `  AGENTS AFFORDABLE AT $${budget.toLocaleString()} (${affordable.length} agents)\n`;
+                output += `═══════════════════════════════════════════════════════════════════════════════════════════════════════\n`;
+                output += `  AGENT        | PRIMARY    | SIDEARM  | SHIELD        | ABILITIES       | TOTAL\n`;
+                output += `───────────────────────────────────────────────────────────────────────────────────────────────────────\n`;
+
+                affordable.forEach(loadout => {
+                    output += `  ${formatCompactLoadout(loadout)}\n`;
+                });
+
+                output += `═══════════════════════════════════════════════════════════════════════════════════════════════════════`;
+
+                return output;
+            }
+
+            return `ERROR: Unknown command '${command}'. Type 'help' for available commands.`;
+        }
+
+        function getHelpText() {
+            return `
+╔═══════════════════════════════════════════════════════════════╗
+║                     AVAILABLE COMMANDS                        ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  loadout                                                      ║
+║    Generate a completely random loadout                      ║
+║                                                               ║
+║  agent:<name>                                                 ║
+║    Generate random loadout for specific agent                ║
+║    Example: agent:jett, agent:sage, agent:omen               ║
+║                                                               ║
+║  <number>                                                     ║
+║    Show all agents that can afford a loadout at that budget  ║
+║    Example: 800, 3000, 5500                                  ║
+║                                                               ║
+║  agents                                                       ║
+║    List all available agents                                 ║
+║                                                               ║
+║  help                                                         ║
+║    Show this help message                                    ║
+║                                                               ║
+║  clear                                                        ║
+║    Clear the output screen                                   ║
+║                                                               ║
+╠═══════════════════════════════════════════════════════════════╣
+║  COMMON BUDGETS:                                             ║
+║    800  - Pistol round                                       ║
+║    2500 - Eco/save round                                     ║
+║    3500 - Half buy                                           ║
+║    5500 - Full buy                                           ║
+╚═══════════════════════════════════════════════════════════════╝`;
+        }
+
+        function listAllAgents() {
+            let output = '\n╔═══════════════════════════════════════════════════════════════╗\n';
+            output += '║                      ALL AGENTS (29)                         ║\n';
+            output += '╠═══════════════════════════════════════════════════════════════╣\n\n';
+
+            const roles = {
+                "Controller": [],
+                "Duelist": [],
+                "Initiator": [],
+                "Sentinel": []
+            };
+
+            Object.keys(AGENTS).forEach(agent => {
+                const role = AGENTS[agent].role;
+                roles[role].push(agent.charAt(0).toUpperCase() + agent.slice(1));
+            });
+
+            Object.keys(roles).forEach(role => {
+                output += `  ${role.toUpperCase()} (${roles[role].length}):\n`;
+                output += `    ${roles[role].join(', ')}\n\n`;
+            });
+
+            output += '╚═══════════════════════════════════════════════════════════════╝';
+
+            return output;
+        }
+
+        // ==================== UI FUNCTIONS ====================
+
+        const outputDiv = document.getElementById('output');
+        const commandInput = document.getElementById('commandInput');
+
+        function addToOutput(text) {
+            if (text === '') {
+                outputDiv.textContent = '';
+            } else {
+                outputDiv.textContent += '\n\n' + text;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+        }
+
+        function randomLoadout() {
+            commandInput.value = 'loadout';
+            submitCommand();
+        }
+
+        function clearOutput() {
+            outputDiv.textContent = '';
+            commandInput.value = '';
+            commandInput.focus();
+        }
+
+        function submitCommand() {
+            const command = commandInput.value;
+
+            // Echo command
+            addToOutput('> ' + command);
+
+            // Process and display result
+            const result = processCommand(command);
+            addToOutput(result);
+
+            // Clear input
+            commandInput.value = '';
+            commandInput.focus();
+        }
+
+        // Handle Enter key
+        commandInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitCommand();
+            }
+        });
+
+        // Focus input on page load
+        window.addEventListener('load', () => {
+            commandInput.focus();
+        });
+    </script>
+</body>
+</html>
