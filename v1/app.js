@@ -218,6 +218,79 @@ function getWeightedAbilities(agentName, budget, tier) {
     return { abilities: abilities.sort(), cost: totalCost };
 }
 
+function optimizeLoadoutBudget(loadout, remainingBudget, agentName, tier) {
+    // Try to upgrade items to maximize credit usage
+    let primary = loadout.primary;
+    let sidearm = loadout.sidearm;
+    let shield = loadout.shield;
+    let abilities = [...loadout.abilities];
+    let budget = remainingBudget;
+
+    // 1. Try buying missing abilities first (small costs, high value)
+    const currentAbilities = new Set(abilities);
+    ['c', 'q', 'e'].forEach(ability => {
+        const abilityUpper = ability.toUpperCase();
+        if (!currentAbilities.has(abilityUpper)) {
+            const cost = getAbilityCost(agentName, ability);
+            if (cost > 0 && cost <= budget) {
+                abilities.push(abilityUpper);
+                abilities.sort();
+                currentAbilities.add(abilityUpper);
+                budget -= cost;
+            }
+        }
+    });
+
+    // 2. Try upgrading sidearm to most expensive affordable option
+    const affordableSidearms = WEAPONS.sidearms.filter(s =>
+        s.cost > sidearm.cost && s.cost <= budget + sidearm.cost
+    );
+    if (affordableSidearms.length > 0) {
+        // Pick the most expensive affordable sidearm
+        const bestSidearm = affordableSidearms.reduce((best, current) =>
+            current.cost > best.cost ? current : best
+        );
+        budget += sidearm.cost; // Refund current
+        sidearm = bestSidearm;
+        budget -= sidearm.cost;
+    }
+
+    // 3. Try upgrading shield to most expensive affordable option
+    const affordableShields = SHIELDS.filter(s =>
+        s.cost > shield.cost && s.cost <= budget + shield.cost
+    );
+    if (affordableShields.length > 0) {
+        const bestShield = affordableShields.reduce((best, current) =>
+            current.cost > best.cost ? current : best
+        );
+        budget += shield.cost; // Refund current
+        shield = bestShield;
+        budget -= shield.cost;
+    }
+
+    // 4. Try upgrading primary weapon to most expensive affordable option
+    const allPrimaries = getAllPrimaryWeapons();
+    const affordablePrimaries = allPrimaries.filter(p =>
+        p.cost > primary.cost && p.cost <= budget + primary.cost
+    );
+    if (affordablePrimaries.length > 0) {
+        const bestPrimary = affordablePrimaries.reduce((best, current) =>
+            current.cost > best.cost ? current : best
+        );
+        budget += primary.cost; // Refund current
+        primary = bestPrimary;
+        budget -= primary.cost;
+    }
+
+    return {
+        primary,
+        sidearm,
+        shield,
+        abilities,
+        remainingBudget: budget
+    };
+}
+
 // ==================== UTILITY FUNCTIONS ====================
 
 function getRandomElement(arr) {
@@ -346,30 +419,47 @@ function generateBudgetLoadout(agent, maxBudget) {
         let remainingBudget = maxBudget;
 
         // 1. Buy primary weapon (weighted by tier)
-        const primary = getWeightedPrimaryWeapon(remainingBudget, tier);
+        let primary = getWeightedPrimaryWeapon(remainingBudget, tier);
         remainingBudget -= primary.cost;
 
         // 2. Buy sidearm (weighted by tier)
-        const sidearm = getWeightedSidearm(remainingBudget, tier);
+        let sidearm = getWeightedSidearm(remainingBudget, tier);
         remainingBudget -= sidearm.cost;
 
         // 3. Buy shield (weighted by tier)
-        const shield = getWeightedShield(remainingBudget, tier);
+        let shield = getWeightedShield(remainingBudget, tier);
         remainingBudget -= shield.cost;
 
         // 4. Buy abilities (weighted by tier)
         const abilityData = getWeightedAbilities(agent, remainingBudget, tier);
+        let abilities = [...abilityData.abilities];
         remainingBudget -= abilityData.cost;
 
         const totalCost = maxBudget - remainingBudget;
 
         if (totalCost <= maxBudget && remainingBudget >= 0) {
+            // Post-allocation optimization: try to use remaining budget
+            if (remainingBudget > 0) {
+                const optimized = optimizeLoadoutBudget({
+                    primary,
+                    sidearm,
+                    shield,
+                    abilities
+                }, remainingBudget, agent, tier);
+
+                primary = optimized.primary;
+                sidearm = optimized.sidearm;
+                shield = optimized.shield;
+                abilities = optimized.abilities;
+                remainingBudget = optimized.remainingBudget;
+            }
+
             return {
                 primary,
                 sidearm,
                 shield,
-                abilities: abilityData.abilities,
-                totalCost
+                abilities,
+                totalCost: maxBudget - remainingBudget
             };
         }
     }
@@ -629,6 +719,7 @@ if (typeof module !== 'undefined' && module.exports) {
         getWeightedSidearm,
         getWeightedShield,
         getWeightedAbilities,
+        optimizeLoadoutBudget,
         generateLoadout,
         generateBudgetLoadout,
         getAllAffordableAgents,
