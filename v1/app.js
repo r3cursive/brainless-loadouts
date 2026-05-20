@@ -13,7 +13,7 @@ const AGENTS = {
     "omen": { role: "Controller", c: 150, q: 300, e: 0, signature: "e" },
     "viper": { role: "Controller", c: 200, q: 200, e: 0, signature: "e" },
     "harbor": { role: "Controller", c: 150, q: 350, e: 0, signature: "e" },
-    "clove": { role: "Controller", c: 100, q: 250, e: 150, signature: "e" },
+    "clove": { role: "Controller", c: 100, q: 250, e: 0, signature: "e" },
 
     // DUELISTS
     "jett": { role: "Duelist", c: 200, q: 150, e: 0, signature: "e" },
@@ -22,23 +22,23 @@ const AGENTS = {
     "raze": { role: "Duelist", c: 400, q: 200, e: 0, signature: "e" },
     "yoru": { role: "Duelist", c: 100, q: 250, e: 0, signature: "e" },
     "neon": { role: "Duelist", c: 300, q: 200, e: 0, signature: "e" },
-    "iso": { role: "Duelist", c: 250, q: 300, e: 150, signature: "e" },
+    "iso": { role: "Duelist", c: 250, q: 300, e: 0, signature: "e" },
 
     // INITIATORS
     "sova": { role: "Initiator", c: 400, q: 150, e: 0, signature: "e" },
     "breach": { role: "Initiator", c: 250, q: 200, e: 0, signature: "e" },
-    "skye": { role: "Initiator", c: 200, q: 250, e: 250, signature: "e" },
+    "skye": { role: "Initiator", c: 200, q: 250, e: 0, signature: "e" },
     "kayo": { role: "Initiator", c: 200, q: 250, e: 0, signature: "e" },
     "fade": { role: "Initiator", c: 250, q: 200, e: 0, signature: "e" },
     "gekko": { role: "Initiator", c: 250, q: 300, e: 0, signature: "e" },
-    "tejo": { role: "Initiator", c: 400, q: 200, e: 150, signature: "e" },
+    "tejo": { role: "Initiator", c: 400, q: 200, e: 0, signature: "e" },
 
     // SENTINELS
     "sage": { role: "Sentinel", c: 400, q: 200, e: 0, signature: "e" },
     "cypher": { role: "Sentinel", c: 200, q: 100, e: 0, signature: "e" },
     "killjoy": { role: "Sentinel", c: 200, q: 200, e: 0, signature: "e" },
-    "chamber": { role: "Sentinel", c: 150, q: 100, e: 0, signature: "q" },
-    "deadlock": { role: "Sentinel", c: 200, q: 200, e: 300, signature: "e" },
+    "chamber": { role: "Sentinel", c: 150, q: 0, e: 0, signature: "q" },
+    "deadlock": { role: "Sentinel", c: 200, q: 200, e: 0, signature: "e" },
     "vyse": { role: "Sentinel", c: 150, q: 200, e: 0, signature: "e" },
     "veto": { role: "Sentinel", c: 200, q: 200, e: 0, signature: "e" }
 };
@@ -123,8 +123,7 @@ function getWeightedPrimaryWeapon(budget, tier) {
             if (weapon.cost === 0) return 5;
             if (weapon.cost < 1600) return 10;
             if (weapon.cost < 2500) return 20;
-            if (weapon.cost >= 2500) return 70;
-            return 15;
+            return 70;
         }
     });
 
@@ -351,7 +350,7 @@ function generateLoadout(agentName = null, maxBudget = null) {
     let primary, sidearm, shield, abilities;
     let totalCost;
 
-    if (maxBudget) {
+    if (maxBudget !== null) {
         const result = generateBudgetLoadout(agent, maxBudget);
         if (!result) return null;
         ({ primary, sidearm, shield, abilities, totalCost } = result);
@@ -444,7 +443,7 @@ function processCommand(command) {
     }
 
     if (command === 'clear') {
-        return { type: 'clear' };
+        return { type: 'clear', data: null };
     }
 
     if (command === 'loadout' || command === 'random') {
@@ -826,6 +825,9 @@ if (typeof module !== 'undefined' && module.exports) {
         AGENTS,
         WEAPONS,
         SHIELDS,
+        BUDGET_TIERS,
+        MAX_ATTEMPTS,
+        ABILITY_PROB,
         getBudgetTier,
         getWeightedPrimaryWeapon,
         getWeightedSidearm,

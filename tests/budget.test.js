@@ -3,7 +3,13 @@ const {
     getWeightedPrimaryWeapon,
     getWeightedSidearm,
     getWeightedShield,
-    generateBudgetLoadout
+    getWeightedAbilities,
+    optimizeLoadoutBudget,
+    generateBudgetLoadout,
+    getAbilityCost,
+    AGENTS,
+    WEAPONS,
+    SHIELDS
 } = require('../v1/app.js');
 
 describe('Smart Weighted Budget Allocation', () => {
@@ -282,5 +288,202 @@ describe('Smart Weighted Budget Allocation', () => {
             // Should generate at least 10 different combinations
             expect(loadouts.size).toBeGreaterThan(10);
         });
+    });
+});
+
+// ==================== GETWEIGHTEDABILITIES ====================
+
+describe('getWeightedAbilities', () => {
+    test('should never exceed budget constraint', () => {
+        const budgets = [0, 200, 500, 1000, 9000];
+        const tiers = ['eco', 'half', 'full'];
+        budgets.forEach(budget => {
+            tiers.forEach(tier => {
+                for (let i = 0; i < 30; i++) {
+                    const result = getWeightedAbilities('sage', budget, tier);
+                    expect(result.cost).toBeLessThanOrEqual(budget);
+                }
+            });
+        });
+    });
+
+    test('should always return cost 0 when budget is 0', () => {
+        const agents = ['jett', 'sage', 'omen', 'sova', 'chamber'];
+        agents.forEach(agent => {
+            for (let i = 0; i < 20; i++) {
+                const result = getWeightedAbilities(agent, 0, 'eco');
+                expect(result.cost).toBe(0);
+            }
+        });
+    });
+
+    test('should never contain duplicate abilities', () => {
+        for (let i = 0; i < 100; i++) {
+            const result = getWeightedAbilities('phoenix', 9000, 'full');
+            const unique = new Set(result.abilities);
+            expect(unique.size).toBe(result.abilities.length);
+        }
+    });
+
+    test('should always return abilities sorted alphabetically', () => {
+        for (let i = 0; i < 50; i++) {
+            const result = getWeightedAbilities('sage', 9000, 'full');
+            const sorted = [...result.abilities].sort();
+            expect(result.abilities).toEqual(sorted);
+        }
+    });
+
+    test('reported cost should exactly equal sum of individual ability costs', () => {
+        const testCases = [
+            { agent: 'sage', budget: 9000, tier: 'full' },
+            { agent: 'jett', budget: 500, tier: 'half' },
+            { agent: 'omen', budget: 9000, tier: 'eco' },
+        ];
+        testCases.forEach(({ agent, budget, tier }) => {
+            for (let i = 0; i < 20; i++) {
+                const result = getWeightedAbilities(agent, budget, tier);
+                const manualCost = result.abilities.reduce((sum, ability) => {
+                    return sum + getAbilityCost(agent, ability.toLowerCase());
+                }, 0);
+                expect(result.cost).toBe(manualCost);
+            }
+        });
+    });
+
+    test('should return { abilities: [], cost: 0 } for an invalid agent', () => {
+        const result = getWeightedAbilities('invalid_agent_xyz', 9000, 'full');
+        expect(result.abilities).toEqual([]);
+        expect(result.cost).toBe(0);
+    });
+
+    test('abilities should only contain C, Q, or E entries', () => {
+        for (let i = 0; i < 50; i++) {
+            const result = getWeightedAbilities('sage', 9000, 'full');
+            result.abilities.forEach(ability => {
+                expect(['C', 'Q', 'E']).toContain(ability);
+            });
+        }
+    });
+
+    test('eco tier should select fewer abilities on average than full tier', () => {
+        const iterations = 300;
+        let ecoTotal = 0;
+        let fullTotal = 0;
+        for (let i = 0; i < iterations; i++) {
+            ecoTotal += getWeightedAbilities('sage', 9000, 'eco').abilities.length;
+            fullTotal += getWeightedAbilities('sage', 9000, 'full').abilities.length;
+        }
+        expect(ecoTotal).toBeLessThan(fullTotal);
+    });
+
+    test('abilities array should never exceed 3 entries', () => {
+        for (let i = 0; i < 100; i++) {
+            const result = getWeightedAbilities('sage', 9000, 'full');
+            expect(result.abilities.length).toBeLessThanOrEqual(3);
+        }
+    });
+});
+
+// ==================== OPTIMIZELOADOUTBUDGET ====================
+
+describe('optimizeLoadoutBudget', () => {
+    const emptyLoadout = () => ({
+        primary: { name: 'None', cost: 0 },
+        sidearm: { name: 'Classic', cost: 0 },
+        shield: { name: 'No Shield', cost: 0 },
+        abilities: []
+    });
+
+    test('should return object with primary, sidearm, shield, abilities, remainingBudget', () => {
+        const result = optimizeLoadoutBudget(emptyLoadout(), 0, 'jett', 'eco');
+        expect(result).toHaveProperty('primary');
+        expect(result).toHaveProperty('sidearm');
+        expect(result).toHaveProperty('shield');
+        expect(result).toHaveProperty('abilities');
+        expect(result).toHaveProperty('remainingBudget');
+    });
+
+    test('should make no changes when remaining budget is 0', () => {
+        const loadout = emptyLoadout();
+        const result = optimizeLoadoutBudget(loadout, 0, 'jett', 'eco');
+        expect(result.primary.name).toBe('None');
+        expect(result.sidearm.name).toBe('Classic');
+        expect(result.shield.name).toBe('No Shield');
+        expect(result.abilities).toEqual([]);
+        expect(result.remainingBudget).toBe(0);
+    });
+
+    test('should buy abilities before upgrading weapons', () => {
+        // Jett C=200, Q=150, E=0(sig). Budget of 400 should buy abilities (C+Q=350)
+        // rather than buying a Ghost sidearm (500 - too expensive anyway)
+        const result = optimizeLoadoutBudget(emptyLoadout(), 400, 'jett', 'full');
+        expect(result.abilities.length).toBeGreaterThan(0);
+    });
+
+    test('should upgrade sidearm when all affordable abilities are already purchased', () => {
+        // All Jett abilities purchased; 800 left should upgrade sidearm to Sheriff (800)
+        const loadout = { ...emptyLoadout(), abilities: ['C', 'E', 'Q'] };
+        const result = optimizeLoadoutBudget(loadout, 800, 'jett', 'full');
+        expect(result.sidearm.cost).toBeGreaterThan(0);
+    });
+
+    test('should upgrade shield when sidearm is already maxed', () => {
+        // Sheriff already purchased, no abilities left, 1000 budget → Heavy Shield
+        const loadout = {
+            primary: { name: 'None', cost: 0 },
+            sidearm: { name: 'Sheriff', cost: 800 },
+            shield: { name: 'No Shield', cost: 0 },
+            abilities: ['C', 'E', 'Q']
+        };
+        const result = optimizeLoadoutBudget(loadout, 1000, 'jett', 'full');
+        expect(result.shield.cost).toBeGreaterThan(0);
+    });
+
+    test('remainingBudget should always be >= 0 regardless of starting budget', () => {
+        const budgets = [0, 50, 200, 500, 1000, 5000, 9000];
+        budgets.forEach(budget => {
+            const result = optimizeLoadoutBudget(emptyLoadout(), budget, 'sage', 'full');
+            expect(result.remainingBudget).toBeGreaterThanOrEqual(0);
+        });
+    });
+
+    test('should never downgrade any item', () => {
+        // Start with an already-maxed loadout at 0 remaining budget
+        const maxedLoadout = {
+            primary: { name: 'Vandal', cost: 2900 },
+            sidearm: { name: 'Sheriff', cost: 800 },
+            shield: { name: 'Heavy Shield', cost: 1000 },
+            abilities: ['C', 'E', 'Q']
+        };
+        const result = optimizeLoadoutBudget(maxedLoadout, 0, 'sage', 'full');
+        expect(result.primary.cost).toBeGreaterThanOrEqual(2900);
+        expect(result.sidearm.cost).toBeGreaterThanOrEqual(800);
+        expect(result.shield.cost).toBeGreaterThanOrEqual(1000);
+    });
+
+    test('upgraded items should always be affordable within given budget', () => {
+        for (let i = 0; i < 20; i++) {
+            const budget = Math.floor(Math.random() * 3000);
+            const loadout = emptyLoadout();
+            const result = optimizeLoadoutBudget(loadout, budget, 'omen', 'half');
+            const spent = (result.primary.cost - loadout.primary.cost)
+                + (result.sidearm.cost - loadout.sidearm.cost)
+                + (result.shield.cost - loadout.shield.cost)
+                + result.abilities.reduce((s, a) => s + getAbilityCost('omen', a.toLowerCase()), 0);
+            expect(spent).toBeLessThanOrEqual(budget);
+        }
+    });
+
+    test('should not add more than 3 abilities total', () => {
+        const result = optimizeLoadoutBudget(emptyLoadout(), 9000, 'sage', 'full');
+        expect(result.abilities.length).toBeLessThanOrEqual(3);
+    });
+
+    test('should not create duplicate abilities', () => {
+        // Start with one ability already purchased
+        const loadout = { ...emptyLoadout(), abilities: ['C'] };
+        const result = optimizeLoadoutBudget(loadout, 9000, 'sage', 'full');
+        const unique = new Set(result.abilities);
+        expect(unique.size).toBe(result.abilities.length);
     });
 });
