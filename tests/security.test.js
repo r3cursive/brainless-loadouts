@@ -10,32 +10,29 @@ describe('XSS Prevention Tests', () => {
             const maliciousCommand = '<script>alert("XSS")</script>';
             const result = processCommand(maliciousCommand);
 
-            // Should treat as unknown command and return error message
-            expect(result).toContain('ERROR');
-            expect(result).toContain('Unknown command');
-            // Result is a plain string - when rendered via textContent, HTML is auto-escaped
-            expect(typeof result).toBe('string');
+            expect(result.type).toBe('error');
+            expect(result.data).toContain('Unknown command');
         });
 
         test('should safely handle img tag with onerror', () => {
             const maliciousCommand = '<img src=x onerror=alert(1)>';
             const result = processCommand(maliciousCommand);
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should safely handle iframe injection attempts', () => {
             const maliciousCommand = '<iframe src="javascript:alert(1)">';
             const result = processCommand(maliciousCommand);
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should safely handle SVG with onload', () => {
             const maliciousCommand = '<svg onload=alert(1)>';
             const result = processCommand(maliciousCommand);
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
     });
 
@@ -43,50 +40,47 @@ describe('XSS Prevention Tests', () => {
         test('should reject agent names with HTML injection', () => {
             const result = processCommand('agent:<script>alert(1)</script>');
 
-            expect(result).toContain('ERROR');
-            expect(result).toContain('Unknown agent');
+            expect(result.type).toBe('error');
+            expect(result.data).toContain('Unknown agent');
         });
 
         test('should reject agent names with event handlers', () => {
             const result = processCommand('agent:<img src=x onerror=alert(1)>');
 
-            expect(result).toContain('ERROR');
-            expect(result).toContain('Unknown agent');
+            expect(result.type).toBe('error');
+            expect(result.data).toContain('Unknown agent');
         });
 
         test('should only accept whitelisted agent names', () => {
             const result = processCommand('agent:"><script>alert(1)</script>');
 
-            expect(result).toContain('ERROR');
-            // Verify it checks against AGENTS whitelist
+            expect(result.type).toBe('error');
             expect(AGENTS).not.toHaveProperty('"><script>alert(1)</script>');
         });
     });
 
     describe('Input Sanitization', () => {
         test('should handle extremely long input safely', () => {
-            // Note: HTML has maxlength=100, but test logic handling
             const longCommand = 'loadout'.repeat(50); // 350 chars
             const result = processCommand(longCommand);
 
-            // Should still process, though will be unknown command
             expect(result).toBeDefined();
-            expect(typeof result).toBe('string');
+            expect(result.type).toBeDefined();
+            expect(typeof result.data === 'string' || result.data === undefined).toBe(true);
         });
 
-        test('should convert all input to strings', () => {
-            // Test that numbers are handled
+        test('should handle numeric-like input as budget', () => {
             const result = processCommand('9000');
             expect(result).toBeDefined();
-            expect(typeof result).toBe('string');
+            expect(result.type).not.toBe(undefined);
         });
 
         test('should handle null/undefined input gracefully', () => {
             const result1 = processCommand('');
             const result2 = processCommand('   ');
 
-            expect(result1).toContain('ERROR');
-            expect(result2).toContain('ERROR');
+            expect(result1.type).toBe('error');
+            expect(result2.type).toBe('error');
         });
     });
 
@@ -94,26 +88,26 @@ describe('XSS Prevention Tests', () => {
         test('should handle single quotes safely', () => {
             const result = processCommand("agent:' OR '1'='1");
 
-            expect(result).toContain('ERROR');
-            expect(result).toContain('Unknown agent');
+            expect(result.type).toBe('error');
+            expect(result.data).toContain('Unknown agent');
         });
 
         test('should handle double quotes safely', () => {
             const result = processCommand('agent:" OR "1"="1');
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should handle unicode characters safely', () => {
-            const result = processCommand('agent:\u003cscript\u003ealert(1)\u003c/script\u003e');
+            const result = processCommand('agent:<script>alert(1)</script>');
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should handle URL encoded input', () => {
             const result = processCommand('agent:%3Cscript%3Ealert(1)%3C/script%3E');
 
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
     });
 
@@ -135,43 +129,45 @@ describe('XSS Prevention Tests', () => {
             test(`should safely handle XSS payload: ${payload.substring(0, 30)}...`, () => {
                 const result = processCommand(payload);
 
-                // Should either return error or safe processed result
                 expect(result).toBeDefined();
-                expect(typeof result).toBe('string');
-                // Result is just text, will be rendered via textContent (safe)
+                expect(result.type).toBeDefined();
+                // All data fields are plain strings, rendered via textContent in browser
             });
         });
     });
 
     describe('Output Safety Verification', () => {
-        test('should return safe string output for loadout command', () => {
+        test('should return structured loadout output for loadout command', () => {
             const result = processCommand('loadout');
 
-            expect(typeof result).toBe('string');
-            // Output will be rendered via textContent in browser (auto-escaped)
-            expect(result).toMatch(/AGENT:/);
+            expect(result.type).toBe('loadout');
+            expect(result.data).toBeDefined();
+            expect(result.data.agent).toBeDefined();
+            expect(result.data.primary).toBeDefined();
         });
 
-        test('should return safe string output for help command', () => {
+        test('should return structured help output for help command', () => {
             const result = processCommand('help');
 
-            expect(typeof result).toBe('string');
-            expect(result).toContain('AVAILABLE COMMANDS');
+            expect(result.type).toBe('help');
+            expect(typeof result.data).toBe('string');
+            expect(result.data).toContain('AVAILABLE COMMANDS');
         });
 
-        test('should return safe string output for budget command', () => {
+        test('should return structured list output for budget command', () => {
             const result = processCommand('3000');
 
-            expect(typeof result).toBe('string');
-            // Should contain agent loadout information
+            expect(result.type).toBe('list');
+            expect(result.data.budget).toBe(3000);
+            expect(Array.isArray(result.data.loadouts)).toBe(true);
         });
 
-        test('should return safe error messages', () => {
+        test('should return structured error for invalid commands', () => {
             const result = processCommand('invalidcommand');
 
-            expect(typeof result).toBe('string');
-            expect(result).toContain('ERROR');
-            expect(result).toContain('Unknown command');
+            expect(result.type).toBe('error');
+            expect(typeof result.data).toBe('string');
+            expect(result.data).toContain('Unknown command');
         });
     });
 
@@ -190,7 +186,6 @@ describe('XSS Prevention Tests', () => {
         test('should never include HTML in generated loadout', () => {
             const loadout = generateLoadout('sage');
 
-            // Verify no HTML-like strings in any property
             const jsonStr = JSON.stringify(loadout);
             expect(jsonStr).not.toContain('<script>');
             expect(jsonStr).not.toContain('onerror=');
@@ -205,12 +200,12 @@ describe('XSS Prevention Tests', () => {
 
             validCommands.forEach(cmd => {
                 const result = processCommand(cmd);
-                expect(result).not.toContain('Unknown command');
+                expect(result.type).not.toBe('error');
             });
 
             invalidCommands.forEach(cmd => {
                 const result = processCommand(cmd);
-                expect(result).toContain('ERROR');
+                expect(result.type).toBe('error');
             });
         });
     });
@@ -218,7 +213,6 @@ describe('XSS Prevention Tests', () => {
 
 describe('Security Best Practices Verification', () => {
     test('processCommand should never use eval or Function constructor', () => {
-        // This test verifies the code doesn't use dangerous functions
         const processCommandStr = processCommand.toString();
 
         expect(processCommandStr).not.toContain('eval(');
@@ -232,8 +226,8 @@ describe('Security Best Practices Verification', () => {
         const tooHigh = processCommand('999999');
         const justRight = processCommand('5000');
 
-        expect(tooLow).toContain('ERROR');
-        expect(tooHigh).toContain('ERROR');
-        expect(justRight).not.toContain('ERROR');
+        expect(tooLow.type).toBe('error');
+        expect(tooHigh.type).toBe('error');
+        expect(justRight.type).not.toBe('error');
     });
 });
