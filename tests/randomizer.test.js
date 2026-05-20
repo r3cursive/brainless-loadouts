@@ -123,47 +123,53 @@ describe('Randomizer Core Functions', () => {
     describe('processCommand', () => {
         test('should handle loadout command', () => {
             const result = processCommand('loadout');
-            expect(result).toContain('AGENT:');
-            expect(result).toContain('PRIMARY:');
+            expect(result.type).toBe('loadout');
+            expect(result.data.agent).toBeDefined();
+            expect(result.data.primary).toBeDefined();
         });
 
         test('should handle agent command', () => {
             const result = processCommand('agent:jett');
-            expect(result).toContain('JETT');
-            expect(result).toContain('Duelist');
+            expect(result.type).toBe('loadout');
+            expect(result.data.agent).toBe('Jett');
+            expect(result.data.role).toBe('Duelist');
         });
 
         test('should handle budget command', () => {
             const result = processCommand('3000');
-            expect(result).toContain('AGENTS AFFORDABLE');
-            expect(result).toContain('3,000');
+            expect(result.type).toBe('list');
+            expect(result.data.budget).toBe(3000);
+            expect(Array.isArray(result.data.loadouts)).toBe(true);
         });
 
         test('should handle help command', () => {
             const result = processCommand('help');
-            expect(result).toContain('AVAILABLE COMMANDS');
+            expect(result.type).toBe('help');
+            expect(result.data).toContain('AVAILABLE COMMANDS');
         });
 
         test('should handle agents command', () => {
             const result = processCommand('agents');
-            expect(result).toContain('ALL AGENTS');
+            expect(result.type).toBe('agents');
+            expect(result.data).toBeDefined();
+            expect(result.data.Controller).toBeDefined();
         });
 
         test('should handle invalid commands', () => {
             const result = processCommand('invalid');
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should handle empty commands', () => {
             const result = processCommand('');
-            expect(result).toContain('ERROR');
+            expect(result.type).toBe('error');
         });
 
         test('should handle invalid budget range', () => {
             const result1 = processCommand('-100');
             const result2 = processCommand('10000');
-            expect(result1).toContain('ERROR');
-            expect(result2).toContain('ERROR');
+            expect(result1.type).toBe('error');
+            expect(result2.type).toBe('error');
         });
     });
 });

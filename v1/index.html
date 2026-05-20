@@ -3,22 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Randomly generate VALORANT weapon loadouts with smart budget allocation">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';">
-    <title>VALORANT Loadout Randomizer v1.0</title>
+    <title>VALORANT Loadout Randomizer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="output" class="command-history">VALORANT LOADOUT RANDOMIZER v1.0
-Commands: loadout | agent:&lt;name&gt; | &lt;number&gt; | help | agents | clear
 
-</div>
+    <header class="site-header">
+        <h1 class="site-title">VALORANT <span class="site-title__accent">Loadout</span> Randomizer</h1>
+        <span class="version-badge">v1.0</span>
+    </header>
 
-    <div class="input-bar">
-        <span class="prompt">></span>
-        <input type="text" id="commandInput" placeholder="enter command" autocomplete="off" autofocus maxlength="100">
-        <button id="randomBtn">random</button>
-        <button id="clearBtn">clear</button>
-    </div>
+    <main id="output"
+          role="log"
+          aria-live="polite"
+          aria-label="Loadout output">
+    </main>
+
+    <footer class="input-bar">
+        <label for="commandInput" class="sr-only">Command</label>
+        <span class="prompt-char" aria-hidden="true">&gt;</span>
+        <input
+            type="text"
+            id="commandInput"
+            placeholder="loadout · agent:jett · 3500 · help"
+            autocomplete="off"
+            autofocus
+            maxlength="100">
+        <button id="randomBtn" class="btn btn--primary" aria-label="Generate random loadout">RANDOM</button>
+        <button id="clearBtn" class="btn" aria-label="Clear output">CLEAR</button>
+    </footer>
 
     <script src="app.js"></script>
 </body>
